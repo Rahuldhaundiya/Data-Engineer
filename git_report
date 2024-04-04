@@ -1,0 +1,47 @@
+import pandas as pd
+from pydriller import Repository
+
+def process_commits(repo_url):
+
+
+    try:
+        repo = Repository(repo_url)
+        commits = []
+
+        for commit in repo.traverse_commits():
+            try:
+                record = {
+                    'hash': commit.hash,
+                    'message': commit.msg,
+                    'author_name': commit.author.name,
+                    'author_email': commit.author.email,
+                    'author_date': commit.author_date,
+                    'author_tz': commit.author_timezone,
+                    'committer_name': commit.committer.name,
+                    'committer_email': commit.committer.email,
+                    'num_files': commit.files,
+                }
+                commits.append(record)
+            except Exception as e:
+                print(f'Error processing commit {commit.hash}: {e}')
+                continue  # Skip to next commit on error
+
+        # Create and save DataFrame
+        df_file_commits = pd.DataFrame(commits)
+        print(df_file_commits.head())
+        df_file_commits.to_csv('FileCommits.csv', index=False)
+
+        return df_file_commits
+
+    except Exception as e:
+        print(f'Error accessing repository: {e}')
+        return None  # Return None to indicate an error
+
+# Example usage
+repo_url = "https://github.com/Rahuldhaundiya/Data-Engineer"
+df_commits = process_commits(repo_url)
+
+if df_commits is not None:
+    print("Commit data saved to FileCommits.csv")
+else:
+    print("An error occurred while processing commits.")
